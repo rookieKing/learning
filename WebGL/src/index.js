@@ -67,6 +67,14 @@ function setGeometry(gl, x = 0, y = 0) {
 }
 
 var m3 = {
+  identity: function () {
+    return [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1,
+    ];
+  },
+
   projection: function (width, height) {
     /*
     vec2 zeroToOne = position / u_resolution;
@@ -119,6 +127,18 @@ var m3 = {
     ];
   },
 
+  translate: function (m, tx, ty) {
+    return m3.multiply(m, m3.translation(tx, ty));
+  },
+
+  rotate: function (m, angleInRadians) {
+    return m3.multiply(m, m3.rotation(angleInRadians));
+  },
+
+  scale: function (m, sx, sy) {
+    return m3.multiply(m, m3.scaling(sx, sy));
+  },
+
   multiply: function (a, b) {
     var a00 = a[0 * 3 + 0];
     var a01 = a[0 * 3 + 1];
@@ -164,8 +184,8 @@ var colorUniformLocation = gl.getUniformLocation(program, "u_color");
 var positionBuffer = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 
-var scale = [1, 1];
-var translation = [100, 150];
+var scale = [.85, .85];
+var translation = [60, 40];
 var angleInRadians = 0;
 var color = [Math.random(), Math.random(), Math.random(), 1];
 function resize() {
@@ -230,21 +250,20 @@ function drawScene() {
   // 设置颜色
   gl.uniform4fv(colorUniformLocation, color);
   // 计算矩阵
-  var projectionMatrix = m3.projection(
+  var matrix = m3.projection(
     gl.canvas.clientWidth, gl.canvas.clientHeight);
-  // 创建一个矩阵，可以将原点移动到 'F' 的中心
-  var translationMatrix = m3.translation(translation[0], translation[1]);
-  var rotationMatrix = m3.rotation(angleInRadians);
-  var scaleMatrix = m3.scaling(scale[0], scale[1]);
-  var moveOriginMatrix = m3.translation(-50, -75);
-  // 矩阵相乘
-  var matrix = m3.multiply(projectionMatrix, translationMatrix);
-  matrix = m3.multiply(matrix, rotationMatrix);
-  matrix = m3.multiply(matrix, scaleMatrix);
-  matrix = m3.multiply(matrix, moveOriginMatrix);
+  // 初始矩阵
+  // var matrix = m3.identity();
+  for (var i = 0; i < 5; ++i) {
+    // 矩阵相乘
+    matrix = m3.translate(matrix, translation[0], translation[1]);
+    matrix = m3.rotate(matrix, angleInRadians);
+    matrix = m3.scale(matrix, scale[0], scale[1]);
 
-  // 设置矩阵
-  gl.uniformMatrix3fv(matrixLocation, false, matrix);
-  // 绘制矩形
-  gl.drawArrays(gl.TRIANGLES, 0, 18);
+    // 设置矩阵
+    gl.uniformMatrix3fv(matrixLocation, false, matrix);
+
+    // 绘制矩形
+    gl.drawArrays(gl.TRIANGLES, 0, 18);
+  }
 }
