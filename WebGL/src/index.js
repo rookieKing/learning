@@ -5,12 +5,6 @@ import { createProgram } from './utils.js';
 import template from './template/index.html?raw';
 import './webgl-tutorials.css'
 import './webgl-lessons-ui.js'
-import './jquery/jquery-ui-1.8.16.custom.css'
-import './jquery/jquery-1.7.1.min.js'
-import './jquery/jquery-ui-1.8.16.custom.min.js'
-import './jquery/jquery.mousecapture.js'
-import './jquery/jquery.gman.ui.js'
-import './jquery/jquery-gman-circle.js'
 
 // 返回 0 到 range 范围内的随机整数
 function randomInt(range) {
@@ -100,16 +94,15 @@ resize();
 // Setup a ui.
 webglLessonsUI.setupSlider("#x", { value: translation[0], slide: updatePosition(0), max: gl.canvas.width });
 webglLessonsUI.setupSlider("#y", { value: translation[1], slide: updatePosition(1), max: gl.canvas.height });
-$("#rotation").gmanUnitCircle({
-  width: 200,
-  height: 200,
-  value: 0,
-  slide: function (e, u) {
-    rotation[0] = u.x;
-    rotation[1] = u.y;
-    drawScene();
-  }
-});
+webglLessonsUI.setupSlider("#angle", { slide: updateAngle, max: 360 });
+
+function updateAngle(event, ui) {
+  var angleInDegrees = 360 - ui.value;
+  var angleInRadians = angleInDegrees * Math.PI / 180;
+  rotation[0] = Math.sin(angleInRadians);
+  rotation[1] = Math.cos(angleInRadians);
+  drawScene();
+}
 
 function updatePosition(index) {
   return function (event, ui) {

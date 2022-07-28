@@ -9,15 +9,15 @@ uniform vec2 u_rotation;
 void main() {
   // 旋转位置
   // (a, b) * (c, d) = (ad + bc, bd - ac)
-  // vec2 rotatedPosition = vec2(
-  //    a_position.x * u_rotation.y + a_position.y * u_rotation.x,
-  //    a_position.y * u_rotation.y - a_position.x * u_rotation.x);
+  vec2 rotatedPosition = vec2(
+     a_position.x * u_rotation.y + a_position.y * u_rotation.x,
+     a_position.y * u_rotation.y - a_position.x * u_rotation.x);
   // 复数、二元数
   // (a, b) * (c, d) = (ac - bd, ad + bc)
-  vec2 rotatedPosition = vec2(
-    a_position.x * u_rotation.x - a_position.y * u_rotation.y,
-    a_position.x * u_rotation.y + a_position.y * u_rotation.x
-  );
+  // vec2 rotatedPosition = vec2(
+  //   a_position.x * u_rotation.x - a_position.y * u_rotation.y,
+  //   a_position.x * u_rotation.y + a_position.y * u_rotation.x
+  // );
   // 加上平移量
   vec2 position = rotatedPosition + u_translation;
 
