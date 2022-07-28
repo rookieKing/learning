@@ -4,14 +4,18 @@ attribute vec2 a_position;
 uniform vec2 u_resolution;
 uniform vec2 u_translation;
 uniform vec2 u_rotation;
+uniform vec2 u_scale;
 
 // 所有着色器都有一个main方法
 void main() {
+  // 缩放
+  vec2 scaledPosition = a_position * u_scale;
+
   // 旋转位置
   // (a, b) * (c, d) = (ad + bc, bd - ac)
   vec2 rotatedPosition = vec2(
-     a_position.x * u_rotation.y + a_position.y * u_rotation.x,
-     a_position.y * u_rotation.y - a_position.x * u_rotation.x);
+     scaledPosition.x * u_rotation.y + scaledPosition.y * u_rotation.x,
+     scaledPosition.y * u_rotation.y - scaledPosition.x * u_rotation.x);
   // 复数、二元数
   // (a, b) * (c, d) = (ac - bd, ad + bc)
   // vec2 rotatedPosition = vec2(

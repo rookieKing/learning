@@ -73,6 +73,7 @@ var [, program] = createProgram(gl, vertexShaderSource, fragmentShaderSource);
 // attribute
 var positionAttributeLocation = gl.getAttribLocation(program, "a_position");
 // uniform
+var scaleLocation = gl.getUniformLocation(program, "u_scale");
 var rotationLocation = gl.getUniformLocation(program, "u_rotation");
 var resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
 var translationLocation = gl.getUniformLocation(program, "u_translation");
@@ -80,6 +81,7 @@ var colorUniformLocation = gl.getUniformLocation(program, "u_color");
 var positionBuffer = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 
+var scale = [1, 1];
 var translation = [100, 150];
 var rotation = [0, 1];
 var color = [Math.random(), Math.random(), Math.random(), 1];
@@ -95,6 +97,15 @@ resize();
 webglLessonsUI.setupSlider("#x", { value: translation[0], slide: updatePosition(0), max: gl.canvas.width });
 webglLessonsUI.setupSlider("#y", { value: translation[1], slide: updatePosition(1), max: gl.canvas.height });
 webglLessonsUI.setupSlider("#angle", { slide: updateAngle, max: 360 });
+webglLessonsUI.setupSlider("#scaleX", { value: scale[0], slide: updateScale(0), min: -5, max: 5, step: 0.01, precision: 2 });
+webglLessonsUI.setupSlider("#scaleY", { value: scale[1], slide: updateScale(1), min: -5, max: 5, step: 0.01, precision: 2 });
+
+function updateScale(index) {
+  return function (event, ui) {
+    scale[index] = ui.value;
+    drawScene();
+  };
+}
 
 function updateAngle(event, ui) {
   var angleInDegrees = 360 - ui.value;
@@ -143,6 +154,8 @@ function drawScene() {
   gl.uniform2fv(translationLocation, translation);
   // 设置旋转
   gl.uniform2fv(rotationLocation, rotation);
+  // 设置缩放
+  gl.uniform2fv(scaleLocation, scale);
   // 绘制矩形
   gl.drawArrays(gl.TRIANGLES, 0, 18);
 }
