@@ -213,8 +213,8 @@ function drawScene() {
   var scaleMatrix = m3.scaling(scale[0], scale[1]);
 
   // 矩阵相乘
-  var matrix = m3.multiply(translationMatrix, rotationMatrix);
-  matrix = m3.multiply(matrix, scaleMatrix);
+  var matrix = m3.multiply(scaleMatrix, rotationMatrix);
+  matrix = m3.multiply(matrix, translationMatrix);
 
   // 设置矩阵
   gl.uniformMatrix3fv(matrixLocation, false, matrix);
