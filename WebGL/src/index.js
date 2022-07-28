@@ -50,9 +50,12 @@ var positionBuffer = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 // 三个二维点坐标
 var positions = [
-  0, 0,
-  0, 0.5,
-  0.7, 0,
+  10, 20,
+  80, 20,
+  10, 30,
+  10, 30,
+  80, 20,
+  80, 30,
 ];
 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -62,6 +65,9 @@ gl.clear(gl.COLOR_BUFFER_BIT);
 // 告诉它用我们之前写好的着色程序（一个着色器对）
 gl.useProgram(program);
 gl.enableVertexAttribArray(positionAttributeLocation);
+// 设置全局变量 分辨率
+var resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
+gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
 
 // 将绑定点绑定到缓冲数据（positionBuffer）
 gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -78,6 +84,6 @@ gl.vertexAttribPointer(
 
 var primitiveType = gl.TRIANGLES;
 var offset = 0;
-var count = 3;
+var count = 6;
 gl.drawArrays(primitiveType, offset, count);
 
