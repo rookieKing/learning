@@ -1,35 +1,10 @@
 
 import vertexShaderSource from './glsl/vertex-shader-2d.glsl?raw';
 import fragmentShaderSource from './glsl/fragment-shader-2d.glsl?raw';
-
-
-// 创建着色器方法，输入参数：渲染上下文，着色器类型，数据源
-function createShader(gl, type, source) {
-  var shader = gl.createShader(type); // 创建着色器对象
-  gl.shaderSource(shader, source); // 提供数据源
-  gl.compileShader(shader); // 编译 -> 生成着色器
-  var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
-  if (success) {
-    return shader;
-  }
-
-  console.log(gl.getShaderInfoLog(shader));
-  gl.deleteShader(shader);
-}
-
-function createProgram(gl, vertexShader, fragmentShader) {
-  var program = gl.createProgram();
-  gl.attachShader(program, vertexShader);
-  gl.attachShader(program, fragmentShader);
-  gl.linkProgram(program);
-  var success = gl.getProgramParameter(program, gl.LINK_STATUS);
-  if (success) {
-    return program;
-  }
-
-  console.log(gl.getProgramInfoLog(program));
-  gl.deleteProgram(program);
-}
+import { createProgram } from './utils.js';
+import template from './template/index.html?raw';
+import './webgl-tutorials.css'
+import './webgl-lessons-ui.js'
 
 // 返回 0 到 range 范围内的随机整数
 function randomInt(range) {
@@ -56,7 +31,7 @@ function setRectangle(gl, x, y, width, height) {
      x2, y2]), gl.STATIC_DRAW);
 }
 
-document.querySelector('#app').innerHTML = '<canvas></canvas>';
+document.querySelector('#app').innerHTML = template;
 var canvas = document.querySelector("canvas");
 
 function resize() {
@@ -67,48 +42,62 @@ window.addEventListener('resize', resize);
 resize();
 
 var gl = canvas.getContext("webgl");
-var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
-var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
-var program = createProgram(gl, vertexShader, fragmentShader);
+var [, program] = createProgram(gl, vertexShaderSource, fragmentShaderSource);
 var positionAttributeLocation = gl.getAttribLocation(program, "a_position");
+var colorUniformLocation = gl.getUniformLocation(program, "u_color");
 var positionBuffer = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-// 清空画布
-gl.clearColor(0, 0, 0, 0);
-gl.clear(gl.COLOR_BUFFER_BIT);
-// 告诉它用我们之前写好的着色程序（一个着色器对）
-gl.useProgram(program);
-gl.enableVertexAttribArray(positionAttributeLocation);
-// 设置全局变量 分辨率
-var resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
-gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
 
-// 将绑定点绑定到缓冲数据（positionBuffer）
-gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+var translation = [0, 0];
+var width = 100;
+var height = 30;
+var color = [Math.random(), Math.random(), Math.random(), 1];
 
-// 告诉属性怎么从positionBuffer中读取数据 (ARRAY_BUFFER)
-var size = 2;          // 每次迭代运行提取两个单位数据
-var type = gl.FLOAT;   // 每个单位的数据类型是32位浮点型
-var normalize = false; // 不需要归一化数据
-var stride = 0;        // 0 = 移动单位数量 * 每个单位占用内存（sizeof(type)）
-// 每次迭代运行运动多少内存到下一个数据开始点
-var offset = 0;        // 从缓冲起始位置开始读取
-gl.vertexAttribPointer(
-  positionAttributeLocation, size, type, normalize, stride, offset)
+drawScene();
 
-var colorUniformLocation = gl.getUniformLocation(program, "u_color");
-// 绘制50个随机颜色矩形
-for (var ii = 0; ii < 50; ++ii) {
-  // 创建一个随机矩形
+// Setup a ui.
+webglLessonsUI.setupSlider("#x", {slide: updatePosition(0), max: gl.canvas.width });
+webglLessonsUI.setupSlider("#y", {slide: updatePosition(1), max: gl.canvas.height});
+
+function updatePosition(index) {
+  return function(event, ui) {
+    translation[index] = ui.value;
+    drawScene();
+  };
+}
+
+function drawScene() {
+  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+  // 清空画布
+  gl.clearColor(0, 0, 0, 0);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  // 告诉它用我们之前写好的着色程序（一个着色器对）
+  gl.useProgram(program);
+  gl.enableVertexAttribArray(positionAttributeLocation);
+  // 设置全局变量 分辨率
+  var resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
+  gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
+  
+  // 将绑定点绑定到缓冲数据（positionBuffer）
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+  
+  // 告诉属性怎么从positionBuffer中读取数据 (ARRAY_BUFFER)
+  var size = 2;          // 每次迭代运行提取两个单位数据
+  var type = gl.FLOAT;   // 每个单位的数据类型是32位浮点型
+  var normalize = false; // 不需要归一化数据
+  var stride = 0;        // 0 = 移动单位数量 * 每个单位占用内存（sizeof(type)）
+  // 每次迭代运行运动多少内存到下一个数据开始点
+  var offset = 0;        // 从缓冲起始位置开始读取
+  gl.vertexAttribPointer(
+    positionAttributeLocation, size, type, normalize, stride, offset)
+  
+  // 创建一个矩形
   // 并将写入位置缓冲
-  // 因为位置缓冲是我们绑定在
-  // `ARRAY_BUFFER`绑定点上的最后一个缓冲
   setRectangle(
-      gl, randomInt(300), randomInt(300), randomInt(300), randomInt(300));
+    gl, translation[0], translation[1], width, height);
 
-  // 设置一个随机颜色
-  gl.uniform4f(colorUniformLocation, Math.random(), Math.random(), Math.random(), 1);
+  // 设置颜色
+  gl.uniform4fv(colorUniformLocation, color);
 
   // 绘制矩形
   gl.drawArrays(gl.TRIANGLES, 0, 6);

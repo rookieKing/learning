@@ -39,7 +39,7 @@
     // Browser globals
     root.webglUtils = factory.call(root);
   }
-}(this, function() {
+}(window, function() {
   'use strict';
 
   const topWindow = this;
