@@ -29,7 +29,7 @@ export function createProgram(gl, vs, fs) {
   return [null, program];
 }
 
-export function createShader(gl, type, source) {
+function createShader(gl, type, source) {
   // 创建着色器对象
   const shader = gl.createShader(type);
   // 提供数据源
