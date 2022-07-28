@@ -31,29 +31,63 @@ function setRectangle(gl, x, y, width, height) {
      x2, y2]), gl.STATIC_DRAW);
 }
 
+// 在缓冲存储构成 'F' 的值
+function setGeometry(gl, x = 0, y = 0) {
+  var width = 100;
+  var height = 150;
+  var thickness = 30;
+  gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array([
+          // 左竖
+          x, y,
+          x + thickness, y,
+          x, y + height,
+          x, y + height,
+          x + thickness, y,
+          x + thickness, y + height,
+ 
+          // 上横
+          x + thickness, y,
+          x + width, y,
+          x + thickness, y + thickness,
+          x + thickness, y + thickness,
+          x + width, y,
+          x + width, y + thickness,
+ 
+          // 中横
+          x + thickness, y + thickness * 2,
+          x + width * 2 / 3, y + thickness * 2,
+          x + thickness, y + thickness * 3,
+          x + thickness, y + thickness * 3,
+          x + width * 2 / 3, y + thickness * 2,
+          x + width * 2 / 3, y + thickness * 3,
+      ]),
+      gl.STATIC_DRAW);
+}
+
 document.querySelector('#app').innerHTML = template;
 var canvas = document.querySelector("canvas");
-
-function resize() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-}
-window.addEventListener('resize', resize);
-resize();
-
 var gl = canvas.getContext("webgl");
 var [, program] = createProgram(gl, vertexShaderSource, fragmentShaderSource);
+// attribute
 var positionAttributeLocation = gl.getAttribLocation(program, "a_position");
+// uniform
+var resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
+var translationLocation = gl.getUniformLocation(program, "u_translation");
 var colorUniformLocation = gl.getUniformLocation(program, "u_color");
 var positionBuffer = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 
 var translation = [0, 0];
-var width = 100;
-var height = 30;
 var color = [Math.random(), Math.random(), Math.random(), 1];
-
-drawScene();
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  drawScene();
+}
+window.addEventListener('resize', resize);
+resize();
 
 // Setup a ui.
 webglLessonsUI.setupSlider("#x", {slide: updatePosition(0), max: gl.canvas.width });
@@ -75,7 +109,6 @@ function drawScene() {
   gl.useProgram(program);
   gl.enableVertexAttribArray(positionAttributeLocation);
   // 设置全局变量 分辨率
-  var resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
   gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
   
   // 将绑定点绑定到缓冲数据（positionBuffer）
@@ -91,14 +124,12 @@ function drawScene() {
   gl.vertexAttribPointer(
     positionAttributeLocation, size, type, normalize, stride, offset)
   
-  // 创建一个矩形
-  // 并将写入位置缓冲
-  setRectangle(
-    gl, translation[0], translation[1], width, height);
-
+  // 将几何数据存到缓冲
+  setGeometry(gl);
   // 设置颜色
   gl.uniform4fv(colorUniformLocation, color);
-
+  // 设置平移
+  gl.uniform2fv(translationLocation, translation);
   // 绘制矩形
-  gl.drawArrays(gl.TRIANGLES, 0, 6);
+  gl.drawArrays(gl.TRIANGLES, 0, 18);
 }
