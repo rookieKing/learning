@@ -212,9 +212,12 @@ function drawScene() {
   var rotationMatrix = m3.rotation(angleInRadians);
   var scaleMatrix = m3.scaling(scale[0], scale[1]);
 
+  // 创建一个矩阵，可以将原点移动到 'F' 的中心
+  var moveOriginMatrix = m3.translation(-50, -75);
   // 矩阵相乘
-  var matrix = m3.multiply(scaleMatrix, rotationMatrix);
-  matrix = m3.multiply(matrix, translationMatrix);
+  var matrix = m3.multiply(translationMatrix, rotationMatrix);
+  matrix = m3.multiply(matrix, scaleMatrix);
+  matrix = m3.multiply(matrix, moveOriginMatrix);
 
   // 设置矩阵
   gl.uniformMatrix3fv(matrixLocation, false, matrix);
