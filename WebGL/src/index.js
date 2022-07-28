@@ -67,6 +67,32 @@ function setGeometry(gl, x = 0, y = 0) {
 }
 
 var m3 = {
+  projection: function (width, height) {
+    /*
+    vec2 zeroToOne = position / u_resolution;
+    vec2 zeroToTwo = zeroToOne * 2.0;
+    vec2 clipSpace = zeroToTwo - 1.0;
+    clipSpace.y *= -1.0; // clipSpace *= vec2(1, -1);
+    */
+
+    // var zeroToOne = m3.scaling(1 / width, 1 / height);
+    // var zeroToTwo = m3.scaling(2, 2);
+    // var clipSpace = m3.translation(-1, -1);
+    // var scaleY = m3.scaling(1, -1);
+    // var projectionMatrix; // 顺序很重要
+    // projectionMatrix = m3.multiply(scaleY, clipSpace);
+    // projectionMatrix = m3.multiply(projectionMatrix, zeroToTwo);
+    // projectionMatrix = m3.multiply(projectionMatrix, zeroToOne);
+    // return projectionMatrix;
+
+    // 可以从上面的计算直接得出这个结果
+    return [
+      2 / width, 0, 0,
+      0, -2 / height, 0,
+      -1, 1, 1
+    ];
+  },
+
   translation: function (tx, ty) {
     return [
       1, 0, 0,
@@ -134,7 +160,6 @@ var [, program] = createProgram(gl, vertexShaderSource, fragmentShaderSource);
 var positionAttributeLocation = gl.getAttribLocation(program, "a_position");
 // uniform
 var matrixLocation = gl.getUniformLocation(program, "u_matrix");
-var resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
 var colorUniformLocation = gl.getUniformLocation(program, "u_color");
 var positionBuffer = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -142,7 +167,6 @@ gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 var scale = [1, 1];
 var translation = [100, 150];
 var angleInRadians = 0;
-var rotation = [0, 1];
 var color = [Math.random(), Math.random(), Math.random(), 1];
 function resize() {
   canvas.width = window.innerWidth;
@@ -187,8 +211,6 @@ function drawScene() {
   // 告诉它用我们之前写好的着色程序（一个着色器对）
   gl.useProgram(program);
   gl.enableVertexAttribArray(positionAttributeLocation);
-  // 设置全局变量 分辨率
-  gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
 
   // 将绑定点绑定到缓冲数据（positionBuffer）
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -208,14 +230,16 @@ function drawScene() {
   // 设置颜色
   gl.uniform4fv(colorUniformLocation, color);
   // 计算矩阵
+  var projectionMatrix = m3.projection(
+    gl.canvas.clientWidth, gl.canvas.clientHeight);
+  // 创建一个矩阵，可以将原点移动到 'F' 的中心
   var translationMatrix = m3.translation(translation[0], translation[1]);
   var rotationMatrix = m3.rotation(angleInRadians);
   var scaleMatrix = m3.scaling(scale[0], scale[1]);
-
-  // 创建一个矩阵，可以将原点移动到 'F' 的中心
   var moveOriginMatrix = m3.translation(-50, -75);
   // 矩阵相乘
-  var matrix = m3.multiply(translationMatrix, rotationMatrix);
+  var matrix = m3.multiply(projectionMatrix, translationMatrix);
+  matrix = m3.multiply(matrix, rotationMatrix);
   matrix = m3.multiply(matrix, scaleMatrix);
   matrix = m3.multiply(matrix, moveOriginMatrix);
 
