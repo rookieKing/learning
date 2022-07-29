@@ -87,7 +87,12 @@ function drawScene() {
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
   // 清空画布
   gl.clearColor(0, 0, 0, 0);
-  gl.clear(gl.COLOR_BUFFER_BIT);
+  // 清空画布和深度缓冲
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  // 启用深度缓冲
+  gl.enable(gl.DEPTH_TEST);
+  // 启用背面剔除
+  gl.enable(gl.CULL_FACE);
   // 告诉它用我们之前写好的着色程序（一个着色器对）
   gl.useProgram(program);
   gl.enableVertexAttribArray(positionAttributeLocation);
