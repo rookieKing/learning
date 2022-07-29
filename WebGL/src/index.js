@@ -14,9 +14,9 @@ var [, program] = createProgram(gl, vertexShaderSource, fragmentShaderSource);
 // attribute
 var positionAttributeLocation = gl.getAttribLocation(program, "a_position");
 // uniform
+var fudgeLocation = gl.getUniformLocation(program, "u_fudgeFactor");
 var matrixLocation = gl.getUniformLocation(program, "u_matrix");
 var colorLocation = gl.getAttribLocation(program, "a_color");
-var colorUniformLocation = gl.getUniformLocation(program, "u_color");
 var positionBuffer = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 // 将几何数据存到缓冲
@@ -28,10 +28,10 @@ gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
 // 将颜色值传入缓冲
 setColors(gl);
 
+var fudgeFactor = 1;
 var translation = [45, 150, 0];
 var rotation = [degToRad(40), degToRad(25), degToRad(325)];
 var scale = [1, 1, 1];
-var color = [Math.random(), Math.random(), Math.random(), 1];
 
 function resize() {
   canvas.width = window.innerWidth;
@@ -42,15 +42,21 @@ window.addEventListener('resize', resize);
 resize();
 
 // Setup a ui.
+webglLessonsUI.setupSlider("#fudgeFactor", { value: fudgeFactor, slide: updateFudgeFactor, max: 2, step: 0.001, precision: 3 });
 webglLessonsUI.setupSlider("#x", { value: translation[0], slide: updatePosition(0), max: gl.canvas.width });
 webglLessonsUI.setupSlider("#y", { value: translation[1], slide: updatePosition(1), max: gl.canvas.height });
-webglLessonsUI.setupSlider("#z", { value: translation[2], slide: updatePosition(2), max: gl.canvas.height });
+webglLessonsUI.setupSlider("#z", { value: translation[2], slide: updatePosition(2), max: gl.canvas.height, min: -gl.canvas.height });
 webglLessonsUI.setupSlider("#angleX", { value: radToDeg(rotation[0]), slide: updateRotation(0), max: 360 });
 webglLessonsUI.setupSlider("#angleY", { value: radToDeg(rotation[1]), slide: updateRotation(1), max: 360 });
 webglLessonsUI.setupSlider("#angleZ", { value: radToDeg(rotation[2]), slide: updateRotation(2), max: 360 });
 webglLessonsUI.setupSlider("#scaleX", { value: scale[0], slide: updateScale(0), min: -5, max: 5, step: 0.01, precision: 2 });
 webglLessonsUI.setupSlider("#scaleY", { value: scale[1], slide: updateScale(1), min: -5, max: 5, step: 0.01, precision: 2 });
 webglLessonsUI.setupSlider("#scaleZ", { value: scale[2], slide: updateScale(2), min: -5, max: 5, step: 0.01, precision: 2 });
+
+function updateFudgeFactor(event, ui) {
+  fudgeFactor = ui.value;
+  drawScene();
+}
 
 function updateScale(index) {
   return function (event, ui) {
@@ -123,7 +129,8 @@ function drawScene() {
   gl.vertexAttribPointer(
     colorLocation, size, type, normalize, stride, offset)
   // 计算矩阵
-  var matrix = m4.projection(gl.canvas.clientWidth, gl.canvas.clientHeight, 400);
+  var matrix;
+  matrix = m4.projection(gl.canvas.clientWidth, gl.canvas.clientHeight, 400);
   matrix = m4.translate(matrix, translation[0], translation[1], translation[2]);
   matrix = m4.xRotate(matrix, rotation[0]);
   matrix = m4.yRotate(matrix, rotation[1]);
@@ -131,6 +138,9 @@ function drawScene() {
   matrix = m4.scale(matrix, scale[0], scale[1], scale[2]);
   // 设置矩阵
   gl.uniformMatrix4fv(matrixLocation, false, matrix);
+
+  // 设置 fudgeFactor
+  gl.uniform1f(fudgeLocation, fudgeFactor);
 
   // 绘制矩形
   gl.drawArrays(gl.TRIANGLES, 0, 16 * 6);
