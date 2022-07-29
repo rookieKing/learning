@@ -270,6 +270,15 @@ export function setColors(gl) {
 }
 
 export var m4 = {
+  makeZToWMatrix(fudgeFactor) {
+    return [
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, fudgeFactor,
+      0, 0, 0, 1,
+    ];
+  },
+
   projection: function (width, height, depth) {
     return [
       2 / width, 0, 0, 0,

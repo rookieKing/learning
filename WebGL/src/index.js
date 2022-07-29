@@ -14,7 +14,6 @@ var [, program] = createProgram(gl, vertexShaderSource, fragmentShaderSource);
 // attribute
 var positionAttributeLocation = gl.getAttribLocation(program, "a_position");
 // uniform
-var fudgeLocation = gl.getUniformLocation(program, "u_fudgeFactor");
 var matrixLocation = gl.getUniformLocation(program, "u_matrix");
 var colorLocation = gl.getAttribLocation(program, "a_color");
 var positionBuffer = gl.createBuffer();
@@ -131,6 +130,7 @@ function drawScene() {
   // 计算矩阵
   var matrix;
   matrix = m4.projection(gl.canvas.clientWidth, gl.canvas.clientHeight, 400);
+  matrix = m4.multiply(m4.makeZToWMatrix(fudgeFactor), matrix);
   matrix = m4.translate(matrix, translation[0], translation[1], translation[2]);
   matrix = m4.xRotate(matrix, rotation[0]);
   matrix = m4.yRotate(matrix, rotation[1]);
@@ -138,9 +138,6 @@ function drawScene() {
   matrix = m4.scale(matrix, scale[0], scale[1], scale[2]);
   // 设置矩阵
   gl.uniformMatrix4fv(matrixLocation, false, matrix);
-
-  // 设置 fudgeFactor
-  gl.uniform1f(fudgeLocation, fudgeFactor);
 
   // 绘制矩形
   gl.drawArrays(gl.TRIANGLES, 0, 16 * 6);
