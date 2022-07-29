@@ -5,7 +5,7 @@ import { createProgram } from './utils.js';
 import template from './template/index.html?raw';
 import './webgl-tutorials.css'
 import './webgl-lessons-ui.js'
-import { setGeometry, m4 } from './help.js'
+import { setGeometry, m4, setColors } from './help.js'
 
 document.querySelector('#app').innerHTML = template;
 var canvas = document.querySelector("canvas");
@@ -15,11 +15,18 @@ var [, program] = createProgram(gl, vertexShaderSource, fragmentShaderSource);
 var positionAttributeLocation = gl.getAttribLocation(program, "a_position");
 // uniform
 var matrixLocation = gl.getUniformLocation(program, "u_matrix");
+var colorLocation = gl.getAttribLocation(program, "a_color");
 var colorUniformLocation = gl.getUniformLocation(program, "u_color");
 var positionBuffer = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 // 将几何数据存到缓冲
 setGeometry(gl);
+
+// 给颜色创建一个缓冲
+var colorBuffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+// 将颜色值传入缓冲
+setColors(gl);
 
 var translation = [45, 150, 0];
 var rotation = [degToRad(40), degToRad(25), degToRad(325)];
@@ -84,6 +91,8 @@ function drawScene() {
   // 告诉它用我们之前写好的着色程序（一个着色器对）
   gl.useProgram(program);
   gl.enableVertexAttribArray(positionAttributeLocation);
+  // 启用颜色属性
+  gl.enableVertexAttribArray(colorLocation);
 
   // 将绑定点绑定到缓冲数据（positionBuffer）
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -98,8 +107,16 @@ function drawScene() {
   gl.vertexAttribPointer(
     positionAttributeLocation, size, type, normalize, stride, offset)
 
-  // 设置颜色
-  gl.uniform4fv(colorUniformLocation, color);
+  // 绑定颜色缓冲
+  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+  // 告诉颜色属性怎么从 colorBuffer (ARRAY_BUFFER) 中读取颜色值
+  var size = 3;                 // 每次迭代使用3个单位的数据
+  var type = gl.UNSIGNED_BYTE;  // 单位数据类型是无符号 8 位整数
+  var normalize = true;         // 标准化数据 (从 0-255 转换到 0.0-1.0)
+  var stride = 0;               // 0 = 移动距离 * 单位距离长度sizeof(type)  每次迭代跳多少距离到下一个数据
+  var offset = 0;               // 从绑定缓冲的起始处开始
+  gl.vertexAttribPointer(
+    colorLocation, size, type, normalize, stride, offset)
   // 计算矩阵
   var matrix = m4.projection(gl.canvas.clientWidth, gl.canvas.clientHeight, 400);
   matrix = m4.translate(matrix, translation[0], translation[1], translation[2]);
