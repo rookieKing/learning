@@ -27,10 +27,10 @@ gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
 // 将颜色值传入缓冲
 setColors(gl);
 
-var fudgeFactor = 1;
-var translation = [45, 150, 0];
-var rotation = [degToRad(40), degToRad(25), degToRad(325)];
+var translation = [-150, 0, -360];
+var rotation = [degToRad(190), degToRad(40), degToRad(320)];
 var scale = [1, 1, 1];
+var fieldOfViewRadians = degToRad(60);
 
 function resize() {
   canvas.width = window.innerWidth;
@@ -41,9 +41,9 @@ window.addEventListener('resize', resize);
 resize();
 
 // Setup a ui.
-webglLessonsUI.setupSlider("#fudgeFactor", { value: fudgeFactor, slide: updateFudgeFactor, max: 2, step: 0.001, precision: 3 });
-webglLessonsUI.setupSlider("#x", { value: translation[0], slide: updatePosition(0), max: gl.canvas.width });
-webglLessonsUI.setupSlider("#y", { value: translation[1], slide: updatePosition(1), max: gl.canvas.height });
+webglLessonsUI.setupSlider("#fieldOfView", { value: radToDeg(fieldOfViewRadians), slide: updateFieldOfView, min: 1, max: 179 });
+webglLessonsUI.setupSlider("#x", { value: translation[0], slide: updatePosition(0), max: gl.canvas.width, min: -200 });
+webglLessonsUI.setupSlider("#y", { value: translation[1], slide: updatePosition(1), max: gl.canvas.height, min: -200 });
 webglLessonsUI.setupSlider("#z", { value: translation[2], slide: updatePosition(2), max: gl.canvas.height, min: -gl.canvas.height });
 webglLessonsUI.setupSlider("#angleX", { value: radToDeg(rotation[0]), slide: updateRotation(0), max: 360 });
 webglLessonsUI.setupSlider("#angleY", { value: radToDeg(rotation[1]), slide: updateRotation(1), max: 360 });
@@ -52,8 +52,8 @@ webglLessonsUI.setupSlider("#scaleX", { value: scale[0], slide: updateScale(0), 
 webglLessonsUI.setupSlider("#scaleY", { value: scale[1], slide: updateScale(1), min: -5, max: 5, step: 0.01, precision: 2 });
 webglLessonsUI.setupSlider("#scaleZ", { value: scale[2], slide: updateScale(2), min: -5, max: 5, step: 0.01, precision: 2 });
 
-function updateFudgeFactor(event, ui) {
-  fudgeFactor = ui.value;
+function updateFieldOfView(event, ui) {
+  fieldOfViewRadians = degToRad(ui.value);
   drawScene();
 }
 
@@ -127,10 +127,12 @@ function drawScene() {
   var offset = 0;               // 从绑定缓冲的起始处开始
   gl.vertexAttribPointer(
     colorLocation, size, type, normalize, stride, offset)
+  var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+  var zNear = 1;
+  var zFar = 2000;
   // 计算矩阵
   var matrix;
-  matrix = m4.projection(gl.canvas.clientWidth, gl.canvas.clientHeight, 400);
-  matrix = m4.multiply(m4.makeZToWMatrix(fudgeFactor), matrix);
+  matrix = m4.perspective(fieldOfViewRadians, aspect, zNear, zFar);
   matrix = m4.translate(matrix, translation[0], translation[1], translation[2]);
   matrix = m4.xRotate(matrix, rotation[0]);
   matrix = m4.yRotate(matrix, rotation[1]);
