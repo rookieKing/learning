@@ -1,11 +1,12 @@
 
+import { m4 } from 'twgl.js';
 import vertexShaderSource from './glsl/vertex-shader-2d.glsl?raw';
 import fragmentShaderSource from './glsl/fragment-shader-2d.glsl?raw';
 import { createProgram, radToDeg, degToRad } from './utils.js';
 import template from './template/index.html?raw';
 import './webgl-tutorials.css'
 import './webgl-lessons-ui.js'
-import { setGeometry, m4, setColors } from './help.js'
+import { setGeometry, setColors } from './help.js'
 
 document.querySelector('#app').innerHTML = template;
 var canvas = document.querySelector("canvas");
@@ -68,8 +69,19 @@ function drawScene() {
   // 计算相机的矩阵
   var numFs = 5;
   var radius = 200;
-  var cameraMatrix = m4.yRotation(cameraAngleRadians);
-  cameraMatrix = m4.translate(cameraMatrix, 0, 0, radius * 1.5);
+  var cameraMatrix = m4.rotationY(cameraAngleRadians);
+  cameraMatrix = m4.translate(cameraMatrix, [0, 0, radius * 1.5]);
+  // 计算第一个 F 的位置
+  var fPosition = [radius, 0, 0];
+  // 获得矩阵中相机的位置
+  var cameraPosition = [
+    cameraMatrix[12],
+    cameraMatrix[13],
+    cameraMatrix[14],
+  ];
+  var up = [0, 1, 0];
+  // 计算相机的朝向矩阵
+  cameraMatrix = m4.lookAt(cameraPosition, fPosition, up);
   // 通过相机矩阵计算视图矩阵
   var viewMatrix = m4.inverse(cameraMatrix);
   // 计算组合矩阵
@@ -81,9 +93,9 @@ function drawScene() {
     var y = Math.sin(angle) * radius;
     // 从视图投影矩阵开始
     // 计算 F 的矩阵
-    var matrix = m4.translate(viewProjectionMatrix, x, 0, y);
-    matrix = m4.xRotate(matrix, Math.PI);
-    matrix = m4.translate(matrix, -50, -75, -15);
+    var matrix = m4.translate(viewProjectionMatrix, [x, 0, y]);
+    matrix = m4.rotateX(matrix, Math.PI);
+    matrix = m4.translate(matrix, [-50, -75, -15]);
     // 设置矩阵
     gl.uniformMatrix4fv(u_matrix, false, matrix);
     // 绘制矩形

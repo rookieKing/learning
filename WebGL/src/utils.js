@@ -41,10 +41,22 @@ function createShader(gl, type, source) {
   return [null, shader];
 }
 
+/**
+ * 弧度转角度
+ * 
+ * @param {*} rad 弧度
+ * @returns 
+ */
 export function radToDeg(rad) {
   return rad * 180 / Math.PI;
 }
 
+/**
+ * 角度转弧度
+ * 
+ * @param {*} deg 角度
+ * @returns 
+ */
 export function degToRad(deg) {
   return deg * Math.PI / 180;
 }

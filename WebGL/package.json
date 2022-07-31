@@ -10,5 +10,9 @@
   },
   "devDependencies": {
     "vite": "^3.0.0"
+  },
+  "dependencies": {
+    "@rookiecode/common": "^2.0.3",
+    "twgl.js": "^4.24.0"
   }
 }
