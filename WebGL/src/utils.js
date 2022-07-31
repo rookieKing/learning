@@ -40,3 +40,11 @@ function createShader(gl, type, source) {
   if (!compiled) return [gl.getShaderInfoLog(shader)];
   return [null, shader];
 }
+
+export function radToDeg(rad) {
+  return rad * 180 / Math.PI;
+}
+
+export function degToRad(deg) {
+  return deg * Math.PI / 180;
+}
