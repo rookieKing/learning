@@ -45,28 +45,27 @@ gl.vertexAttribPointer(a_texcoord, 2, gl.FLOAT, false, 0, 0);
 // 创建一个纹理
 var texture = gl.createTexture();
 gl.bindTexture(gl.TEXTURE_2D, texture);
-// 用 1x1 个蓝色像素填充纹理
-gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
-  new Uint8Array([0, 0, 255, 255]));
-// 异步加载图像
-var image = new Image();
-image.src = "res/keyboard.jpg";
-image.addEventListener('load', function () {
-  // 现在图像加载完成，拷贝到纹理中
-  gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-  // 检查每个维度是否是 2 的幂
-  if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
-    // 是 2 的幂，一般用贴图
-    gl.generateMipmap(gl.TEXTURE_2D);
-  } else {
-    // 不是 2 的幂，关闭贴图并设置包裹模式为到边缘
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  }
-});
-
+const alignment = 1;
+gl.pixelStorei(gl.UNPACK_ALIGNMENT, alignment);
+// 用 3x2 的像素填充纹理
+const level = 0;
+const internalFormat = gl.LUMINANCE;
+const width = 3;
+const height = 2;
+const border = 0;
+const format = gl.LUMINANCE;
+const type = gl.UNSIGNED_BYTE;
+const data = new Uint8Array([
+  128, 64, 128,
+  0, 192, 0,
+]);
+gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, width, height, border,
+  format, type, data);
+// 设置筛选器，我们不需要使用贴图所以就不用筛选器了
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 // 启用深度缓冲
 gl.enable(gl.DEPTH_TEST);
 // 启用背面剔除
