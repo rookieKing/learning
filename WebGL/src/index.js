@@ -21,7 +21,7 @@ var u_texture = gl.getUniformLocation(program, "u_texture");
 
 var cameraAngleRadians = degToRad(0);
 var fieldOfViewRadians = degToRad(60);
-var rotationSpeed = .5; // 每秒半圈
+var rotationSpeed = .2; // 5 秒 1 圈
 var then = 0;
 
 // Setup a ui.
@@ -66,6 +66,25 @@ gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+// 创建渲染对象
+const targetTextureWidth = 256;
+const targetTextureHeight = 256;
+const targetTexture = gl.createTexture();
+gl.bindTexture(gl.TEXTURE_2D, targetTexture);
+// 定义 0 级的大小和格式
+gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, targetTextureWidth, targetTextureHeight, 0,
+  gl.RGBA, gl.UNSIGNED_BYTE, null);
+// 设置筛选器，不需要使用贴图
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+// 创建并绑定帧缓冲
+const fb = gl.createFramebuffer();
+gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+// 附加纹理为第一个颜色附件
+const attachmentPoint = gl.COLOR_ATTACHMENT0;
+gl.framebufferTexture2D(
+  gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, targetTexture, 0);
 // 启用深度缓冲
 gl.enable(gl.DEPTH_TEST);
 // 启用背面剔除
@@ -76,18 +95,12 @@ gl.enableVertexAttribArray(a_position);
 // 启用纹理属性
 gl.enableVertexAttribArray(a_texcoord);
 
-function drawScene(now) {
+function drawF(now, aspect) {
   var deltaTime = now - then;
   // 使用时间差计算旋转的角度
   cameraAngleRadians = degToRad((radToDeg(cameraAngleRadians) + rotationSpeed * 360 / 1000 * deltaTime) % 360);
   then = now;
-  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-  // 清空画布
-  gl.clearColor(0, 0, 0, 0);
-  // 清空画布和深度缓冲
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   // 计算投影矩阵
-  var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
   var zNear = 1;
   var zFar = 2000;
   var projectionMatrix = m4.perspective(fieldOfViewRadians, aspect, zNear, zFar);
@@ -127,6 +140,43 @@ function drawScene(now) {
     gl.uniform1i(u_texture, 0);
     // 绘制矩形
     gl.drawArrays(gl.TRIANGLES, 0, 16 * 6);
+  }
+}
+
+function drawScene(now) {
+  // 通过绑定帧缓冲绘制到纹理
+  {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+
+    // 使用 3×2 的纹理渲染
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+
+    // 告诉WebGL如何从裁剪空间映射到像素空间
+    gl.viewport(0, 0, targetTextureWidth, targetTextureHeight);
+
+    // 清空画布和深度缓冲
+    gl.clearColor(0, 0, 1, 1);   // clear to blue
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    const aspect = targetTextureWidth / targetTextureHeight;
+    drawF(now, aspect);
+  }
+  // 渲染到画布
+  {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+    // 使用刚才渲染的纹理
+    gl.bindTexture(gl.TEXTURE_2D, targetTexture);
+
+    // 告诉WebGL如何从裁剪空间映射到像素空间
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+    // 清空画布和深度缓冲
+    gl.clearColor(1, 1, 1, 1);   // clear to white
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+    drawF(now, aspect);
   }
   requestAnimationFrame(drawScene);
 }
