@@ -60,3 +60,13 @@ export function radToDeg(rad) {
 export function degToRad(deg) {
   return deg * Math.PI / 180;
 }
+
+/**
+ * 是不是 2 的幂
+ * 
+ * @param {*} value 
+ * @returns 
+ */
+export function isPowerOf2(value) {
+  return (value & (value - 1)) == 0;
+}
