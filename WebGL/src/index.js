@@ -21,6 +21,7 @@ var a_color = gl.getAttribLocation(program, "a_color");
 var cameraAngleRadians = degToRad(0);
 var fieldOfViewRadians = degToRad(60);
 var rotationSpeed = .5; // 每秒半圈
+var then = 0;
 
 // Setup a ui.
 
@@ -51,9 +52,11 @@ gl.enableVertexAttribArray(a_position);
 // 启用颜色属性
 gl.enableVertexAttribArray(a_color);
 
-function drawScene() {
-  // 假设每秒 60 帧
-  cameraAngleRadians = degToRad((radToDeg(cameraAngleRadians) + rotationSpeed * 360 / 60) % 360);
+function drawScene(now) {
+  var deltaTime = now - then;
+  // 使用时间差计算旋转的角度
+  cameraAngleRadians = degToRad((radToDeg(cameraAngleRadians) + rotationSpeed * 360 / 1000 * deltaTime) % 360);
+  then = now;
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
   // 清空画布
   gl.clearColor(0, 0, 0, 0);
