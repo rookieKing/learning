@@ -2,11 +2,11 @@
 import { m4 } from 'twgl.js';
 import vertexShaderSource from './glsl/vertex-shader-2d.glsl?raw';
 import fragmentShaderSource from './glsl/fragment-shader-2d.glsl?raw';
-import { createProgram, radToDeg, degToRad, isPowerOf2 } from './utils.js';
+import { createProgram, radToDeg, degToRad } from './utils.js';
 import template from './template/index.html?raw';
 import './webgl-tutorials.css'
 import './webgl-lessons-ui.js'
-import { setGeometry, setTexcoords } from './help.js'
+import { Cube } from './help.js'
 
 document.querySelector('#app').innerHTML = template;
 var canvas = document.querySelector("canvas");
@@ -18,10 +18,12 @@ var a_texcoord = gl.getAttribLocation(program, "a_texcoord");
 // uniform
 var u_matrix = gl.getUniformLocation(program, "u_matrix");
 var u_texture = gl.getUniformLocation(program, "u_texture");
+var u_colorMult = gl.getUniformLocation(program, "u_colorMult");
 
 var cameraAngleRadians = degToRad(0);
 var fieldOfViewRadians = degToRad(60);
-var rotationSpeed = .2; // 5 秒 1 圈
+var modelXRotationRadians = degToRad(0);
+var modelYRotationRadians = degToRad(0);
 var then = 0;
 
 // Setup a ui.
@@ -30,7 +32,7 @@ var positionBuffer = gl.createBuffer();
 // 将绑定点绑定到缓冲数据（positionBuffer）
 gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 // 将几何数据存到缓冲
-setGeometry(gl);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(Cube.position), gl.STATIC_DRAW);
 // 告诉属性怎么从positionBuffer中读取数据 (ARRAY_BUFFER)
 gl.vertexAttribPointer(a_position, 3, gl.FLOAT, false, 0, 0);
 
@@ -39,7 +41,7 @@ var texcoordBuffer = gl.createBuffer();
 // 绑定颜色缓冲
 gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
 // 将颜色值传入缓冲
-setTexcoords(gl);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(Cube.texcoord), gl.STATIC_DRAW);
 // 以浮点型格式传递纹理坐标
 gl.vertexAttribPointer(a_texcoord, 2, gl.FLOAT, false, 0, 0);
 // 创建一个纹理
@@ -85,6 +87,12 @@ gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
 const attachmentPoint = gl.COLOR_ATTACHMENT0;
 gl.framebufferTexture2D(
   gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, targetTexture, 0);
+// 创建一个深度缓冲
+const depthBuffer = gl.createRenderbuffer();
+gl.bindRenderbuffer(gl.RENDERBUFFER, depthBuffer);
+// 设置深度缓冲的大小和targetTexture相同
+gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, targetTextureWidth, targetTextureHeight);
+gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depthBuffer);
 // 启用深度缓冲
 gl.enable(gl.DEPTH_TEST);
 // 启用背面剔除
@@ -95,55 +103,43 @@ gl.enableVertexAttribArray(a_position);
 // 启用纹理属性
 gl.enableVertexAttribArray(a_texcoord);
 
-function drawF(now, aspect) {
-  var deltaTime = now - then;
-  // 使用时间差计算旋转的角度
-  cameraAngleRadians = degToRad((radToDeg(cameraAngleRadians) + rotationSpeed * 360 / 1000 * deltaTime) % 360);
-  then = now;
+function drawF(aspect) {
   // 计算投影矩阵
   var zNear = 1;
   var zFar = 2000;
   var projectionMatrix = m4.perspective(fieldOfViewRadians, aspect, zNear, zFar);
   // 计算相机的矩阵
-  var numFs = 5;
   var radius = 200;
   var cameraMatrix = m4.rotationY(cameraAngleRadians);
-  cameraMatrix = m4.translate(cameraMatrix, [0, 0, radius * 1.5]);
-  // 计算第一个 F 的位置
-  var fPosition = [radius, 0, 0];
-  // 获得矩阵中相机的位置
-  var cameraPosition = [
-    cameraMatrix[12],
-    cameraMatrix[13],
-    cameraMatrix[14],
-  ];
-  var up = [0, 1, 0];
-  // 计算相机的朝向矩阵
-  cameraMatrix = m4.lookAt(cameraPosition, fPosition, up);
+  cameraMatrix = m4.translate(cameraMatrix, [0, 0, 3]);
   // 通过相机矩阵计算视图矩阵
   var viewMatrix = m4.inverse(cameraMatrix);
   // 计算组合矩阵
   var viewProjectionMatrix = m4.multiply(projectionMatrix, viewMatrix);
 
-  for (var ii = 0; ii < numFs; ++ii) {
-    var angle = ii * Math.PI * 2 / numFs;
-    var x = Math.cos(angle) * radius;
-    var y = Math.sin(angle) * radius;
-    // 从视图投影矩阵开始
+  [-1, 0, 1].forEach(x => {
     // 计算 F 的矩阵
-    var matrix = m4.translate(viewProjectionMatrix, [x, 0, y]);
-    matrix = m4.rotateX(matrix, Math.PI);
-    matrix = m4.translate(matrix, [-50, -75, -15]);
+    var matrix = m4.translate(viewProjectionMatrix, [x * .9, 0, 0]);
+
+    matrix = m4.rotateX(matrix, modelXRotationRadians * x);
+    matrix = m4.rotateY(matrix, modelYRotationRadians * x);
     // 设置矩阵
     gl.uniformMatrix4fv(u_matrix, false, matrix);
     // 使用纹理 0
     gl.uniform1i(u_texture, 0);
+    const c = x * .5 + .5;
+    gl.uniform4fv(u_colorMult, [c, 1, 1 - c, 1]);
     // 绘制矩形
     gl.drawArrays(gl.TRIANGLES, 0, 16 * 6);
-  }
+  });
 }
 
 function drawScene(now) {
+  var deltaTime = now - then;
+  then = now;
+  // Animate the rotation
+  modelYRotationRadians += -0.0007 * deltaTime;
+  modelXRotationRadians += -0.0004 * deltaTime;
   // 通过绑定帧缓冲绘制到纹理
   {
     gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
@@ -155,11 +151,11 @@ function drawScene(now) {
     gl.viewport(0, 0, targetTextureWidth, targetTextureHeight);
 
     // 清空画布和深度缓冲
-    gl.clearColor(0, 0, 1, 1);   // clear to blue
+    gl.clearColor(.5, 7, 1, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     const aspect = targetTextureWidth / targetTextureHeight;
-    drawF(now, aspect);
+    drawF(aspect);
   }
   // 渲染到画布
   {
@@ -176,7 +172,7 @@ function drawScene(now) {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-    drawF(now, aspect);
+    drawF(aspect);
   }
   requestAnimationFrame(drawScene);
 }
