@@ -6,7 +6,7 @@ import { createProgram, radToDeg, degToRad } from './utils.js';
 import template from './template/index.html?raw';
 import './webgl-tutorials.css'
 import './webgl-lessons-ui.js'
-import { setGeometry, setColors } from './help.js'
+import { setGeometry, setTexcoords } from './help.js'
 
 document.querySelector('#app').innerHTML = template;
 var canvas = document.querySelector("canvas");
@@ -14,9 +14,10 @@ var gl = canvas.getContext("webgl");
 var [, program] = createProgram(gl, vertexShaderSource, fragmentShaderSource);
 // attribute
 var a_position = gl.getAttribLocation(program, "a_position");
+var a_texcoord = gl.getAttribLocation(program, "a_texcoord");
 // uniform
 var u_matrix = gl.getUniformLocation(program, "u_matrix");
-var a_color = gl.getAttribLocation(program, "a_color");
+var u_texture = gl.getUniformLocation(program, "u_texture");
 
 var cameraAngleRadians = degToRad(0);
 var fieldOfViewRadians = degToRad(60);
@@ -34,13 +35,28 @@ setGeometry(gl);
 gl.vertexAttribPointer(a_position, 3, gl.FLOAT, false, 0, 0);
 
 // 给颜色创建一个缓冲
-var colorBuffer = gl.createBuffer();
+var texcoordBuffer = gl.createBuffer();
 // 绑定颜色缓冲
-gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
 // 将颜色值传入缓冲
-setColors(gl);
-// 告诉颜色属性怎么从 colorBuffer (ARRAY_BUFFER) 中读取颜色值
-gl.vertexAttribPointer(a_color, 3, gl.UNSIGNED_BYTE, true, 0, 0);
+setTexcoords(gl);
+// 以浮点型格式传递纹理坐标
+gl.vertexAttribPointer(a_texcoord, 2, gl.FLOAT, false, 0, 0);
+// 创建一个纹理
+var texture = gl.createTexture();
+gl.bindTexture(gl.TEXTURE_2D, texture);
+// 用 1x1 个蓝色像素填充纹理
+gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
+  new Uint8Array([0, 0, 255, 255]));
+// 异步加载图像
+var image = new Image();
+image.src = "res/f-texture.png";
+image.addEventListener('load', function () {
+  // 现在图像加载完成，拷贝到纹理中
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+  gl.generateMipmap(gl.TEXTURE_2D);
+});
 
 // 启用深度缓冲
 gl.enable(gl.DEPTH_TEST);
@@ -49,8 +65,8 @@ gl.enable(gl.CULL_FACE);
 // 告诉它用我们之前写好的着色程序（一个着色器对）
 gl.useProgram(program);
 gl.enableVertexAttribArray(a_position);
-// 启用颜色属性
-gl.enableVertexAttribArray(a_color);
+// 启用纹理属性
+gl.enableVertexAttribArray(a_texcoord);
 
 function drawScene(now) {
   var deltaTime = now - then;
@@ -99,6 +115,8 @@ function drawScene(now) {
     matrix = m4.translate(matrix, [-50, -75, -15]);
     // 设置矩阵
     gl.uniformMatrix4fv(u_matrix, false, matrix);
+    // 使用纹理 0
+    gl.uniform1i(u_texture, 0);
     // 绘制矩形
     gl.drawArrays(gl.TRIANGLES, 0, 16 * 6);
   }
