@@ -20,13 +20,9 @@ var a_color = gl.getAttribLocation(program, "a_color");
 
 var cameraAngleRadians = degToRad(0);
 var fieldOfViewRadians = degToRad(60);
+var rotationSpeed = .5; // 每秒半圈
 
 // Setup a ui.
-webglLessonsUI.setupSlider("#cameraAngle", { value: radToDeg(cameraAngleRadians), slide: updateCameraAngle, min: -360, max: 360 });
-function updateCameraAngle(event, ui) {
-  cameraAngleRadians = degToRad(ui.value);
-  drawScene();
-}
 
 var positionBuffer = gl.createBuffer();
 // 将绑定点绑定到缓冲数据（positionBuffer）
@@ -56,6 +52,8 @@ gl.enableVertexAttribArray(a_position);
 gl.enableVertexAttribArray(a_color);
 
 function drawScene() {
+  // 假设每秒 60 帧
+  cameraAngleRadians = degToRad((radToDeg(cameraAngleRadians) + rotationSpeed * 360 / 60) % 360);
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
   // 清空画布
   gl.clearColor(0, 0, 0, 0);
@@ -101,12 +99,13 @@ function drawScene() {
     // 绘制矩形
     gl.drawArrays(gl.TRIANGLES, 0, 16 * 6);
   }
+  requestAnimationFrame(drawScene);
 }
 
 function resize() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-  drawScene();
+  requestAnimationFrame(drawScene);
 }
 window.addEventListener('resize', resize);
 resize();
