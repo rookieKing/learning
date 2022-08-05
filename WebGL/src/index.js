@@ -17,7 +17,8 @@ var a_position = gl.getAttribLocation(program, "a_position");
 var a_texcoord = gl.getAttribLocation(program, "a_texcoord");
 var a_normal = gl.getAttribLocation(program, "a_normal");
 // uniform
-var u_matrix = gl.getUniformLocation(program, "u_matrix");
+var u_worldViewProjection = gl.getUniformLocation(program, "u_worldViewProjection");
+var u_world = gl.getUniformLocation(program, "u_world");
 var u_texture = gl.getUniformLocation(program, "u_texture");
 var u_colorMult = gl.getUniformLocation(program, "u_colorMult");
 var u_reverseLightDirection = gl.getUniformLocation(program, "u_reverseLightDirection");
@@ -106,16 +107,18 @@ function drawF(aspect) {
   // 通过相机矩阵计算视图矩阵
   var viewMatrix = m4.inverse(cameraMatrix);
   // 计算组合矩阵
-  var matrix = m4.multiply(projectionMatrix, viewMatrix);
-  matrix = m4.rotateX(matrix, modelXRotationRadians);
-  matrix = m4.rotateY(matrix, modelYRotationRadians);
+  var viewProjectionMatrix = m4.multiply(projectionMatrix, viewMatrix);
+  var worldMatrix = m4.rotationX(modelXRotationRadians);
+  worldMatrix = m4.rotateY(worldMatrix, modelYRotationRadians);
+  var worldViewProjectionMatrix = m4.multiply(viewProjectionMatrix, worldMatrix);
   // 设置矩阵
-  gl.uniformMatrix4fv(u_matrix, false, matrix);
+  gl.uniformMatrix4fv(u_worldViewProjection, false, worldViewProjectionMatrix);
+  gl.uniformMatrix4fv(u_world, false, worldMatrix);
   // 使用纹理 0
   gl.uniform1i(u_texture, 0);
   gl.uniform4fv(u_colorMult, [1, 1, 1, 1]);
   // 设置光线方向
-  gl.uniform3fv(u_reverseLightDirection, v3.normalize([0.5, 0.7, 1]));
+  gl.uniform3fv(u_reverseLightDirection, v3.normalize([0.5, 0.7, 0]));
   // 绘制矩形
   gl.drawArrays(gl.TRIANGLES, 0, 16 * 6);
 }
