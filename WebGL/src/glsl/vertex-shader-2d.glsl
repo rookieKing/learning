@@ -1,10 +1,12 @@
 // 一个属性变量，将会从缓冲中获取数据
 attribute vec4 a_position;
 attribute vec2 a_texcoord;
+attribute vec3 a_normal;
 
 uniform mat4 u_matrix;
 
 varying vec2 v_texcoord;
+varying vec3 v_normal;
 
 // 所有着色器都有一个main方法
 void main() {
@@ -13,4 +15,7 @@ void main() {
 
   // 传递纹理坐标到片断着色器
   v_texcoord = a_texcoord;
+
+  // 将法向量传到片断着色器
+  v_normal = a_normal;
 }

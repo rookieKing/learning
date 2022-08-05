@@ -10,22 +10,19 @@
  */
 export function createProgram(gl, vs, fs) {
   const program = gl.createProgram();
-  if (!vs.map) vs = [vs];
-  if (!fs.map) fs = [fs];
-  const shaders = [
-    ...vs.map(source => createShader(gl, gl.VERTEX_SHADER, source)[1]),
-    ...fs.map(source => createShader(gl, gl.FRAGMENT_SHADER, source)[1]),
-  ];
-  shaders.forEach(shader => {
-    gl.attachShader(program, shader);
-  });
+  var [err, vsShader] = createShader(gl, gl.VERTEX_SHADER, vs);
+  if (err) return [err];
+  var [err, fsShader] = createShader(gl, gl.FRAGMENT_SHADER, fs);
+  if (err) return [err];
+  gl.attachShader(program, vsShader);
+  gl.attachShader(program, fsShader);
   gl.linkProgram(program);
   const linked = gl.getProgramParameter(program, gl.LINK_STATUS);
   if (!linked) return [gl.getProgramInfoLog(program)];
-  shaders.forEach(shader => {
-    gl.detachShader(program, shader);
-    gl.deleteShader(shader);
-  });
+  gl.detachShader(program, vsShader);
+  gl.deleteShader(vsShader);
+  gl.detachShader(program, fsShader);
+  gl.deleteShader(fsShader);
   return [null, program];
 }
 
