@@ -4,7 +4,7 @@ attribute vec2 a_texcoord;
 attribute vec3 a_normal;
 
 uniform mat4 u_worldViewProjection;
-uniform mat4 u_world;
+uniform mat4 u_worldInverseTranspose;
 
 varying vec2 v_texcoord;
 varying vec3 v_normal;
@@ -18,5 +18,5 @@ void main() {
   v_texcoord = a_texcoord;
 
   // 重定向法向量并传递给片断着色器
-  v_normal = mat3(u_world) * a_normal;
+  v_normal = mat3(u_worldInverseTranspose) * a_normal;
 }

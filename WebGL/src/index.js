@@ -18,7 +18,7 @@ var a_texcoord = gl.getAttribLocation(program, "a_texcoord");
 var a_normal = gl.getAttribLocation(program, "a_normal");
 // uniform
 var u_worldViewProjection = gl.getUniformLocation(program, "u_worldViewProjection");
-var u_world = gl.getUniformLocation(program, "u_world");
+var u_worldInverseTranspose = gl.getUniformLocation(program, "u_worldInverseTranspose");
 var u_texture = gl.getUniformLocation(program, "u_texture");
 var u_colorMult = gl.getUniformLocation(program, "u_colorMult");
 var u_reverseLightDirection = gl.getUniformLocation(program, "u_reverseLightDirection");
@@ -111,9 +111,11 @@ function drawF(aspect) {
   var worldMatrix = m4.rotationX(modelXRotationRadians);
   worldMatrix = m4.rotateY(worldMatrix, modelYRotationRadians);
   var worldViewProjectionMatrix = m4.multiply(viewProjectionMatrix, worldMatrix);
+  var worldInverseMatrix = m4.inverse(worldMatrix);
+  var worldInverseTransposeMatrix = m4.transpose(worldInverseMatrix);
   // 设置矩阵
   gl.uniformMatrix4fv(u_worldViewProjection, false, worldViewProjectionMatrix);
-  gl.uniformMatrix4fv(u_world, false, worldMatrix);
+  gl.uniformMatrix4fv(u_worldInverseTranspose, false, worldInverseTransposeMatrix);
   // 使用纹理 0
   gl.uniform1i(u_texture, 0);
   gl.uniform4fv(u_colorMult, [1, 1, 1, 1]);
