@@ -22,16 +22,25 @@ var u_worldInverseTranspose = gl.getUniformLocation(program, "u_worldInverseTran
 var u_texture = gl.getUniformLocation(program, "u_texture");
 var u_colorMult = gl.getUniformLocation(program, "u_colorMult");
 var u_lightWorldPosition = gl.getUniformLocation(program, "u_lightWorldPosition");
+var u_viewWorldPosition = gl.getUniformLocation(program, "u_viewWorldPosition");
 var u_world = gl.getUniformLocation(program, "u_world");
+var u_shininess = gl.getUniformLocation(program, "u_shininess");
 
 var cameraAngleRadians = degToRad(0);
 var fieldOfViewRadians = degToRad(60);
 var modelXRotationRadians = degToRad(0);
 var modelYRotationRadians = degToRad(0);
+var shininess = 150;
 
 // Setup a ui.
 webglLessonsUI.setupSlider("#xRotation", { value: radToDeg(modelXRotationRadians), slide: updateRotationX, min: -360, max: 360 });
 webglLessonsUI.setupSlider("#yRotation", { value: radToDeg(modelYRotationRadians), slide: updateRotationY, min: -360, max: 360 });
+webglLessonsUI.setupSlider("#shininess", { value: shininess, slide: updateShininess, min: 1, max: 300 });
+
+function updateShininess(event, ui) {
+  shininess = ui.value;
+  drawScene();
+}
 
 function updateRotationX(event, ui) {
   modelXRotationRadians = degToRad(ui.value);
@@ -103,8 +112,9 @@ function drawF(aspect) {
   var zFar = 2000;
   var projectionMatrix = m4.perspective(fieldOfViewRadians, aspect, zNear, zFar);
   // 计算相机的矩阵
+  var camera = [0, 0, 300];
   var cameraMatrix = m4.rotationY(cameraAngleRadians);
-  cameraMatrix = m4.translate(cameraMatrix, [0, 0, 300]);
+  cameraMatrix = m4.translate(cameraMatrix, camera);
   // 通过相机矩阵计算视图矩阵
   var viewMatrix = m4.inverse(cameraMatrix);
   // 计算组合矩阵
@@ -123,6 +133,10 @@ function drawF(aspect) {
   gl.uniform4fv(u_colorMult, [1, 1, 1, 1]);
   // 设置光源位置
   gl.uniform3fv(u_lightWorldPosition, [20, 30, 50]);
+  // 设置相机位置
+  gl.uniform3fv(u_viewWorldPosition, camera);
+  // 设置亮度
+  gl.uniform1f(u_shininess, shininess);
   // 绘制矩形
   gl.drawArrays(gl.TRIANGLES, 0, 16 * 6);
 }

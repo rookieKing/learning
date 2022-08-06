@@ -4,6 +4,7 @@ attribute vec2 a_texcoord;
 attribute vec3 a_normal;
 
 uniform vec3 u_lightWorldPosition;
+uniform vec3 u_viewWorldPosition;
 uniform mat4 u_world;
 uniform mat4 u_worldViewProjection;
 uniform mat4 u_worldInverseTranspose;
@@ -11,6 +12,7 @@ uniform mat4 u_worldInverseTranspose;
 varying vec2 v_texcoord;
 varying vec3 v_normal;
 varying vec3 v_surfaceToLight;
+varying vec3 v_surfaceToView;
 
 // 所有着色器都有一个main方法
 void main() {
@@ -29,4 +31,8 @@ void main() {
   // 计算表面到光源的方向
   // 传递给片断着色器
   v_surfaceToLight = u_lightWorldPosition - surfaceWorldPosition;
+
+  // 计算表面到相机的方向
+  // 然后传递到片断着色器
+  v_surfaceToView = u_viewWorldPosition - surfaceWorldPosition;
 }
