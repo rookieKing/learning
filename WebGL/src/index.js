@@ -21,7 +21,8 @@ var u_worldViewProjection = gl.getUniformLocation(program, "u_worldViewProjectio
 var u_worldInverseTranspose = gl.getUniformLocation(program, "u_worldInverseTranspose");
 var u_texture = gl.getUniformLocation(program, "u_texture");
 var u_colorMult = gl.getUniformLocation(program, "u_colorMult");
-var u_reverseLightDirection = gl.getUniformLocation(program, "u_reverseLightDirection");
+var u_lightWorldPosition = gl.getUniformLocation(program, "u_lightWorldPosition");
+var u_world = gl.getUniformLocation(program, "u_world");
 
 var cameraAngleRadians = degToRad(0);
 var fieldOfViewRadians = degToRad(60);
@@ -116,11 +117,12 @@ function drawF(aspect) {
   // 设置矩阵
   gl.uniformMatrix4fv(u_worldViewProjection, false, worldViewProjectionMatrix);
   gl.uniformMatrix4fv(u_worldInverseTranspose, false, worldInverseTransposeMatrix);
+  gl.uniformMatrix4fv(u_world, false, worldMatrix);
   // 使用纹理 0
   gl.uniform1i(u_texture, 0);
   gl.uniform4fv(u_colorMult, [1, 1, 1, 1]);
-  // 设置光线方向
-  gl.uniform3fv(u_reverseLightDirection, v3.normalize([0.5, 0.7, 0]));
+  // 设置光源位置
+  gl.uniform3fv(u_lightWorldPosition, [20, 30, 50]);
   // 绘制矩形
   gl.drawArrays(gl.TRIANGLES, 0, 16 * 6);
 }
