@@ -25,6 +25,8 @@ var u_lightWorldPosition = gl.getUniformLocation(program, "u_lightWorldPosition"
 var u_viewWorldPosition = gl.getUniformLocation(program, "u_viewWorldPosition");
 var u_world = gl.getUniformLocation(program, "u_world");
 var u_shininess = gl.getUniformLocation(program, "u_shininess");
+var u_lightColor = gl.getUniformLocation(program, "u_lightColor");
+var u_specularColor = gl.getUniformLocation(program, "u_specularColor");
 
 var cameraAngleRadians = degToRad(0);
 var fieldOfViewRadians = degToRad(60);
@@ -137,6 +139,10 @@ function drawF(aspect) {
   gl.uniform3fv(u_viewWorldPosition, camera);
   // 设置亮度
   gl.uniform1f(u_shininess, shininess);
+  // 设置光照颜色
+  gl.uniform3fv(u_lightColor, v3.normalize([1, 0.6, 0.6]));  // 红光
+  // 设置高光颜色
+  gl.uniform3fv(u_specularColor, v3.normalize([1, 0.6, 0.6]));  // 红光
   // 绘制矩形
   gl.drawArrays(gl.TRIANGLES, 0, 16 * 6);
 }

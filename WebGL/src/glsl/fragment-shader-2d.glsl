@@ -12,6 +12,8 @@ varying vec3 v_surfaceToView;
 uniform sampler2D u_texture;
 uniform vec4 u_colorMult;
 uniform float u_shininess;
+uniform vec3 u_lightColor;
+uniform vec3 u_specularColor;
 
 void main() {
   // 由于 v_normal 是插值出来的，和有可能不是单位向量，
@@ -35,4 +37,10 @@ void main() {
 
   // 直接加上高光
   gl_FragColor.rgb += specular;
+
+  // 只将颜色部分（不包含 alpha） 和光照相乘
+  gl_FragColor.rgb *= light * u_lightColor;
+
+  // 直接和高光相加
+  gl_FragColor.rgb += specular * u_specularColor;
 }
