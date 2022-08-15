@@ -27,17 +27,40 @@ var u_world = gl.getUniformLocation(program, "u_world");
 var u_shininess = gl.getUniformLocation(program, "u_shininess");
 var u_lightColor = gl.getUniformLocation(program, "u_lightColor");
 var u_specularColor = gl.getUniformLocation(program, "u_specularColor");
+var u_lightDirection = gl.getUniformLocation(program, "u_lightDirection");
+var u_limit = gl.getUniformLocation(program, "u_limit");
 
-var cameraAngleRadians = degToRad(0);
 var fieldOfViewRadians = degToRad(60);
 var modelXRotationRadians = degToRad(0);
 var modelYRotationRadians = degToRad(0);
 var shininess = 150;
+var lightRotationX = 0;
+var lightRotationY = 0;
+var lightDirection = [0, 0, 1];
+var limit = degToRad(30);
 
 // Setup a ui.
 webglLessonsUI.setupSlider("#xRotation", { value: radToDeg(modelXRotationRadians), slide: updateRotationX, min: -360, max: 360 });
 webglLessonsUI.setupSlider("#yRotation", { value: radToDeg(modelYRotationRadians), slide: updateRotationY, min: -360, max: 360 });
 webglLessonsUI.setupSlider("#shininess", { value: shininess, slide: updateShininess, min: 1, max: 300 });
+webglLessonsUI.setupSlider("#lightRotationX", { value: lightRotationX, slide: updatelightRotationX, min: -2, max: 2, precision: 2, step: 0.001 });
+webglLessonsUI.setupSlider("#lightRotationY", { value: lightRotationY, slide: updatelightRotationY, min: -2, max: 2, precision: 2, step: 0.001 });
+webglLessonsUI.setupSlider("#limit", { value: radToDeg(limit), slide: updateLimit, min: 0, max: 180 });
+
+function updatelightRotationX(event, ui) {
+  lightRotationX = ui.value;
+  drawScene();
+}
+
+function updatelightRotationY(event, ui) {
+  lightRotationY = ui.value;
+  drawScene();
+}
+
+function updateLimit(event, ui) {
+  limit = degToRad(ui.value);
+  drawScene();
+}
 
 function updateShininess(event, ui) {
   shininess = ui.value;
@@ -115,8 +138,9 @@ function drawF(aspect) {
   var projectionMatrix = m4.perspective(fieldOfViewRadians, aspect, zNear, zFar);
   // 计算相机的矩阵
   var camera = [0, 0, 300];
-  var cameraMatrix = m4.rotationY(cameraAngleRadians);
-  cameraMatrix = m4.translate(cameraMatrix, camera);
+  var target = [0, 35, 0];
+  var up = [0, 1, 0];
+  var cameraMatrix = m4.lookAt(camera, target, up);
   // 通过相机矩阵计算视图矩阵
   var viewMatrix = m4.inverse(cameraMatrix);
   // 计算组合矩阵
@@ -134,11 +158,22 @@ function drawF(aspect) {
   gl.uniform1i(u_texture, 0);
   gl.uniform4fv(u_colorMult, [1, 1, 1, 1]);
   // 设置光源位置
-  gl.uniform3fv(u_lightWorldPosition, [20, 30, 50]);
+  const lightPosition = [40, 60, 120];
+  gl.uniform3fv(u_lightWorldPosition, lightPosition);
   // 设置相机位置
   gl.uniform3fv(u_viewWorldPosition, camera);
   // 设置亮度
   gl.uniform1f(u_shininess, shininess);
+  // 聚光灯指向 F
+  {
+    var lmat = m4.lookAt(lightPosition, target, up);
+    lmat = m4.multiply(m4.rotationX(lightRotationX), lmat);
+    lmat = m4.multiply(m4.rotationY(lightRotationY), lmat);
+    // lookAt -Z 轴
+    lightDirection = [-lmat[8], -lmat[9], -lmat[10]];
+  }
+  gl.uniform3fv(u_lightDirection, lightDirection);
+  gl.uniform1f(u_limit, Math.cos(limit));
   // 设置光照颜色
   gl.uniform3fv(u_lightColor, v3.normalize([1, 0.6, 0.6]));  // 红光
   // 设置高光颜色
