@@ -15,7 +15,8 @@ uniform float u_shininess;
 uniform vec3 u_lightColor;
 uniform vec3 u_specularColor;
 uniform vec3 u_lightDirection;
-uniform float u_limit;          // 在点乘空间中
+uniform float u_innerLimit;     // 在点乘空间中
+uniform float u_outerLimit;     // 在点乘空间中
 
 void main() {
   // 由于 v_normal 是插值出来的，和有可能不是单位向量，
@@ -26,16 +27,10 @@ void main() {
   vec3 surfaceToViewDirection = normalize(v_surfaceToView);
   vec3 halfVector = normalize(surfaceToLightDirection + surfaceToViewDirection);
 
-  float light = 0.0;
-  float specular = 0.0;
   float dotFromDirection = dot(surfaceToLightDirection, -u_lightDirection);
-
-  if(dotFromDirection >= u_limit) {
-    light = dot(normal, surfaceToLightDirection);
-    if(light > 0.0) {
-      specular = pow(dot(normal, halfVector), u_shininess);
-    }
-  }
+  float inLight = smoothstep(u_outerLimit, u_innerLimit, dotFromDirection);
+  float light = inLight * dot(normal, surfaceToLightDirection);
+  float specular = inLight * pow(dot(normal, halfVector), u_shininess);
 
   gl_FragColor = texture2D(u_texture, v_texcoord) * u_colorMult;
 

@@ -28,7 +28,8 @@ var u_shininess = gl.getUniformLocation(program, "u_shininess");
 var u_lightColor = gl.getUniformLocation(program, "u_lightColor");
 var u_specularColor = gl.getUniformLocation(program, "u_specularColor");
 var u_lightDirection = gl.getUniformLocation(program, "u_lightDirection");
-var u_limit = gl.getUniformLocation(program, "u_limit");
+var u_innerLimit = gl.getUniformLocation(program, "u_innerLimit");
+var u_outerLimit = gl.getUniformLocation(program, "u_outerLimit");
 
 var fieldOfViewRadians = degToRad(60);
 var modelXRotationRadians = degToRad(0);
@@ -37,7 +38,8 @@ var shininess = 150;
 var lightRotationX = 0;
 var lightRotationY = 0;
 var lightDirection = [0, 0, 1];
-var limit = degToRad(30);
+var innerLimit = degToRad(10);
+var outerLimit = degToRad(20);
 
 // Setup a ui.
 webglLessonsUI.setupSlider("#xRotation", { value: radToDeg(modelXRotationRadians), slide: updateRotationX, min: -360, max: 360 });
@@ -45,7 +47,18 @@ webglLessonsUI.setupSlider("#yRotation", { value: radToDeg(modelYRotationRadians
 webglLessonsUI.setupSlider("#shininess", { value: shininess, slide: updateShininess, min: 1, max: 300 });
 webglLessonsUI.setupSlider("#lightRotationX", { value: lightRotationX, slide: updatelightRotationX, min: -2, max: 2, precision: 2, step: 0.001 });
 webglLessonsUI.setupSlider("#lightRotationY", { value: lightRotationY, slide: updatelightRotationY, min: -2, max: 2, precision: 2, step: 0.001 });
-webglLessonsUI.setupSlider("#limit", { value: radToDeg(limit), slide: updateLimit, min: 0, max: 180 });
+webglLessonsUI.setupSlider("#innerLimit", { value: radToDeg(innerLimit), slide: updateInnerLimit, min: 0, max: 180 });
+webglLessonsUI.setupSlider("#outerLimit", { value: radToDeg(outerLimit), slide: updateOuterLimit, min: 0, max: 180 });
+
+function updateInnerLimit(event, ui) {
+  innerLimit = degToRad(ui.value);
+  drawScene();
+}
+
+function updateOuterLimit(event, ui) {
+  outerLimit = degToRad(ui.value);
+  drawScene();
+}
 
 function updatelightRotationX(event, ui) {
   lightRotationX = ui.value;
@@ -57,10 +70,6 @@ function updatelightRotationY(event, ui) {
   drawScene();
 }
 
-function updateLimit(event, ui) {
-  limit = degToRad(ui.value);
-  drawScene();
-}
 
 function updateShininess(event, ui) {
   shininess = ui.value;
@@ -173,7 +182,8 @@ function drawF(aspect) {
     lightDirection = [-lmat[8], -lmat[9], -lmat[10]];
   }
   gl.uniform3fv(u_lightDirection, lightDirection);
-  gl.uniform1f(u_limit, Math.cos(limit));
+  gl.uniform1f(u_innerLimit, Math.cos(innerLimit));
+  gl.uniform1f(u_outerLimit, Math.cos(outerLimit));
   // 设置光照颜色
   gl.uniform3fv(u_lightColor, v3.normalize([1, 0.6, 0.6]));  // 红光
   // 设置高光颜色
