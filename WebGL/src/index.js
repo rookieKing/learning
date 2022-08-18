@@ -6,7 +6,7 @@ import { createProgram, radToDeg, degToRad } from './utils.js';
 import template from './template/index.html?raw';
 import './webgl-tutorials.css'
 import './webgl-lessons-ui.js'
-import { charF } from './help.js'
+import { Cube } from './help.js'
 
 document.querySelector('#app').innerHTML = template;
 var canvas = document.querySelector("canvas");
@@ -90,7 +90,7 @@ var positionBuffer = gl.createBuffer();
 // 将绑定点绑定到缓冲数据（positionBuffer）
 gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 // 将几何数据存到缓冲
-gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(charF.position), gl.STATIC_DRAW);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(Cube.position), gl.STATIC_DRAW);
 // 告诉属性怎么从positionBuffer中读取数据 (ARRAY_BUFFER)
 gl.vertexAttribPointer(a_position, 3, gl.FLOAT, false, 0, 0);
 
@@ -99,7 +99,7 @@ var texcoordBuffer = gl.createBuffer();
 // 绑定颜色缓冲
 gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
 // 将颜色值传入缓冲
-gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(charF.texcoord), gl.STATIC_DRAW);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(Cube.texcoord), gl.STATIC_DRAW);
 // 以浮点型格式传递纹理坐标
 gl.vertexAttribPointer(a_texcoord, 2, gl.FLOAT, false, 0, 0);
 
@@ -108,7 +108,7 @@ var normalBuffer = gl.createBuffer();
 // 绑定到 ARRAY_BUFFER (可以看作 ARRAY_BUFFER = normalBuffer)
 gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
 // 将法向量存入缓冲
-gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(charF.normal), gl.STATIC_DRAW);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(Cube.normal), gl.STATIC_DRAW);
 // 告诉法向量属性怎么从 normalBuffer (ARRAY_BUFFER) 中读取值
 gl.vertexAttribPointer(a_normal, 3, gl.FLOAT, false, 0, 0);
 
@@ -120,7 +120,7 @@ gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
   new Uint8Array([0, 0, 255, 255]));
 // 异步加载图像
 var image = new Image();
-image.src = "res/f-texture.png";
+image.src = "res/noodles.jpg";
 image.addEventListener('load', function () {
   // 现在图像加载完成，拷贝到纹理中
   gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -140,14 +140,14 @@ gl.enableVertexAttribArray(a_texcoord);
 // 启用法向量属性
 gl.enableVertexAttribArray(a_normal);
 
-function drawF(aspect) {
+function drawCube(aspect) {
   // 计算投影矩阵
   var zNear = 1;
   var zFar = 2000;
   var projectionMatrix = m4.perspective(fieldOfViewRadians, aspect, zNear, zFar);
   // 计算相机的矩阵
-  var camera = [0, 0, 300];
-  var target = [0, 35, 0];
+  var camera = [0, 0, 2];
+  var target = [0, 0, 0];
   var up = [0, 1, 0];
   var cameraMatrix = m4.lookAt(camera, target, up);
   // 通过相机矩阵计算视图矩阵
@@ -167,13 +167,13 @@ function drawF(aspect) {
   gl.uniform1i(u_texture, 0);
   gl.uniform4fv(u_colorMult, [1, 1, 1, 1]);
   // 设置光源位置
-  const lightPosition = [40, 60, 120];
+  const lightPosition = [0, 0, 2];
   gl.uniform3fv(u_lightWorldPosition, lightPosition);
   // 设置相机位置
   gl.uniform3fv(u_viewWorldPosition, camera);
   // 设置亮度
   gl.uniform1f(u_shininess, shininess);
-  // 聚光灯指向 F
+  // 聚光灯指向 Cube
   {
     var lmat = m4.lookAt(lightPosition, target, up);
     lmat = m4.multiply(m4.rotationX(lightRotationX), lmat);
@@ -201,7 +201,7 @@ function drawScene() {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
   const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-  drawF(aspect);
+  drawCube(aspect);
 }
 
 function resize() {
