@@ -14,8 +14,11 @@ var gl = canvas.getContext("webgl");
 var [, program] = createProgram(gl, vertexShaderSource, fragmentShaderSource);
 // attribute
 var a_position = gl.getAttribLocation(program, "a_position");
+var a_normal = gl.getAttribLocation(program, "a_normal");
 // uniform
-var u_worldViewProjection = gl.getUniformLocation(program, "u_worldViewProjection");
+var u_projection = gl.getUniformLocation(program, "u_projection");
+var u_view = gl.getUniformLocation(program, "u_view");
+var u_world = gl.getUniformLocation(program, "u_world");
 var u_texture = gl.getUniformLocation(program, "u_texture");
 
 var fieldOfViewRadians = degToRad(60);
@@ -56,7 +59,6 @@ function updatelightRotationY(event, ui) {
   drawScene();
 }
 
-
 function updateShininess(event, ui) {
   shininess = ui.value;
   drawScene();
@@ -79,6 +81,11 @@ gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(Cube.position), gl.STATIC_DRAW);
 // 告诉属性怎么从positionBuffer中读取数据 (ARRAY_BUFFER)
 gl.vertexAttribPointer(a_position, 3, gl.FLOAT, false, 0, 0);
+
+var normalBuffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(Cube.normal), gl.STATIC_DRAW);
+gl.vertexAttribPointer(a_normal, 3, gl.FLOAT, false, 0, 0);
 
 // 立方体贴图
 var texture = gl.createTexture();
@@ -114,6 +121,7 @@ gl.enable(gl.CULL_FACE);
 // 告诉它用我们之前写好的着色程序（一个着色器对）
 gl.useProgram(program);
 gl.enableVertexAttribArray(a_position);
+gl.enableVertexAttribArray(a_normal);
 
 function drawCube(aspect) {
   // 计算投影矩阵
@@ -128,12 +136,12 @@ function drawCube(aspect) {
   // 通过相机矩阵计算视图矩阵
   var viewMatrix = m4.inverse(cameraMatrix);
   // 计算组合矩阵
-  var viewProjectionMatrix = m4.multiply(projectionMatrix, viewMatrix);
   var worldMatrix = m4.rotationX(modelXRotationRadians);
   worldMatrix = m4.rotateY(worldMatrix, modelYRotationRadians);
-  var worldViewProjectionMatrix = m4.multiply(viewProjectionMatrix, worldMatrix);
   // 设置矩阵
-  gl.uniformMatrix4fv(u_worldViewProjection, false, worldViewProjectionMatrix);
+  gl.uniformMatrix4fv(u_projection, false, projectionMatrix);
+  gl.uniformMatrix4fv(u_view, false, viewMatrix);
+  gl.uniformMatrix4fv(u_world, false, worldMatrix);
   // 使用纹理 0
   gl.uniform1i(u_texture, 0);
   // 绘制矩形
